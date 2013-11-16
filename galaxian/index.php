@@ -12,6 +12,11 @@
 	         one forth the screen.) -->
 	    <canvas id="ship" width="800" height="480">
 	    </canvas>
+	    <div class="score">SCORE: <span id="score"></span></div>
+                <div class="game-over" id="game-over">GAME OVER<p><span onclick="game.restart()">Restart</span></p></div>
+                <div class="loading" id="loading">LOADING...<p>Please wait</p></div>
+                <div class="scoreboard"><p>Scoreboard</p></div>
 	</div><!--Flash ends-->
+	<button onclick="mute()" type="button">Mute/Unmute</button>
 	<script src="space_shooter.js"></script>
   <?php $path=__DIR__; include(__DIR__ . '/../mall/footer.php'); ?>
