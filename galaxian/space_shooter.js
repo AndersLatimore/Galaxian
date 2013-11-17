@@ -24,7 +24,7 @@
 var game = new Game();
 
 function init() {
-        game.init();
+    game.init();
 }
 
 
@@ -40,9 +40,10 @@ var imageRepository = new function() {
         this.bullet = new Image();
         this.enemy = new Image();
         this.enemyBullet = new Image();
+        this.explosion = new Image();
         
         // Ensure all images have loaded before starting the game
-        var numImages = 5;
+        var numImages = 6;
         var numLoaded = 0;
         function imageLoaded() {
                 numLoaded++;
@@ -65,6 +66,9 @@ var imageRepository = new function() {
         this.enemyBullet.onload = function() {
                 imageLoaded();
         }
+        this.explosion.onload = function() {
+                imageLoaded();
+        }
 
         // Set images src
         this.background.src = "imgs/bg.png";
@@ -72,6 +76,7 @@ var imageRepository = new function() {
         this.bullet.src = "imgs/bullet.png";
         this.enemy.src = "imgs/gorf-red.png";
         this.enemyBullet.src = "imgs/bullet_enemy.png";
+        this.explosion.src = "imgs/fire.png";
 }
 
 
@@ -83,11 +88,11 @@ var imageRepository = new function() {
 */
 function Drawable() {
         this.init = function(x, y, width, height) {
-                // Defualt variables
-                this.x = x;
-                this.y = y;
-                this.width = width;
-                this.height = height;
+            // Defualt variables
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
         }
         
         this.speed = 0;
@@ -103,7 +108,7 @@ function Drawable() {
         this.move = function() {
         };
         this.isCollidableWith = function(object) {
-                return (this.collidableWith === object.type);
+            return (this.collidableWith === object.type);
         };
 }
 
@@ -114,26 +119,49 @@ function Drawable() {
 * canvas and creates the illusion of moving by panning the image.
 */
 function Background() {
-        this.speed = 0.5; // Redefine speed of the background for panning
+        this.speed = 0.2; // Redefine speed of the background for panning
         
         // Implement abstract function
         this.draw = function() {
-                // Pan background
-                this.y += this.speed;
-                //this.context.clearRect(0,0, this.canvasWidth, this.canvasHeight);
-                this.context.drawImage(imageRepository.background, this.x, this.y);
+            // Pan background
+            this.y += this.speed;
+            //this.context.clearRect(0,0, this.canvasWidth, this.canvasHeight);
+            this.context.drawImage(imageRepository.background, this.x, this.y);
                 
-                // Draw another image at the top edge of the first image
-                this.context.drawImage(imageRepository.background, this.x, this.y - this.canvasHeight);
+            // Draw another image at the top edge of the first image
+            this.context.drawImage(imageRepository.background, this.x, this.y - this.canvasHeight);
 
-                // If the image scrolled off the screen, reset
-                if (this.y >= this.canvasHeight)
-                        this.y = 0;
+            // If the image scrolled off the screen, reset
+            if (this.y >= this.canvasHeight)
+                this.y = 0;
         };
 }
 // Set Background to inherit properties from Drawable
 Background.prototype = new Drawable();
 
+/**
+*
+*/
+function Explosion() {
+    this.type = "explosion";
+    this.explosionSound = new Audio("sounds/death-explosion.wav");
+    this.explosionSound.volume = .12;
+    this.explosionSound.load();
+
+    this.init = function(x, y, width, height) {
+        // Defualt variables
+        this.x = x
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.alive = true;
+        this.isColliding = false;
+        this.context.drawImage(imageRepository.explosion, this.x, this.y);
+        this.explosionSound.play();
+    }
+    
+}
+Explosion.prototype = new Drawable();
 
 /**
 * Creates the Bullet object which the ship fires. The bullets are
@@ -159,7 +187,7 @@ function Bullet(object) {
          * the bullet.
          */
         this.draw = function() {
-                this.context.clearRect(this.x-1, this.y-1, this.width+2, this.height+2);
+                this.context.clearRect(this.x-1, this.y-1, this.width+1, this.height+1);
                 this.y -= this.speed;
                 
                 if (this.isColliding) {
@@ -518,6 +546,7 @@ function Ship() {
         var counter = 0;
         this.collidableWith = "enemyBullet";
         this.type = "ship";
+        this.explosion = new Explosion();
         
         this.init = function(x, y, width, height) {
                 // Defualt variables
@@ -569,6 +598,7 @@ function Ship() {
                         this.draw();
                 }
                 else {
+                        this.explosion.init(this.x, this.y,imageRepository.explosion.width, imageRepository.explosion.height);
                         this.alive = false;
                         game.gameOver();
                 }
@@ -710,6 +740,10 @@ function Game() {
                         Ship.prototype.context = this.shipContext;
                         Ship.prototype.canvasWidth = this.shipCanvas.width;
                         Ship.prototype.canvasHeight = this.shipCanvas.height;
+
+                        Explosion.prototype.context = this.shipContext;
+                        Explosion.prototype.canvasWidth = this.shipCanvas.width;
+                        Explosion.prototype.canvasHeight = this.shipCanvas.height;
                         
                         Bullet.prototype.context = this.mainContext;
                         Bullet.prototype.canvasWidth = this.mainCanvas.width;
@@ -736,7 +770,7 @@ function Game() {
                         this.enemyPool.init("enemy");
                         this.spawnWave();
                         
-                        this.enemyBulletPool = new Pool(50);
+                        this.enemyBulletPool = new Pool(5);
                         this.enemyBulletPool.init("enemyBullet");
                         
                         // Start QuadTree
@@ -756,7 +790,7 @@ function Game() {
                         this.backgroundAudio.volume = .20;
                         this.backgroundAudio.load();
 
-                        this.checkAudio = window.setInterval(function(){checkReadyState()},1000);
+                        this.checkAudio = window.setInterval(function(){checkReadyState()},2500);
                 }
         };
         
@@ -764,14 +798,14 @@ function Game() {
         this.spawnWave = function() {
                 var height = imageRepository.enemy.height;
                 var width = imageRepository.enemy.width;
-                var x = 150;
+                var x = 120;
                 var y = -height;
                 var spacer = y * 1.5;
                 for (var i = 1; i <= 18; i++) {
                         this.enemyPool.get(x,y,2);
                         x += width + 25;
                         if (i % 6 == 0) {
-                                x = 150;
+                                x = 120;
                                 y += spacer
                         }
                 }
@@ -785,8 +819,7 @@ function Game() {
         };
         
         // Restart the game
-        this.restart = function() {
-                
+        this.restart = function() {          
                 document.getElementById('game-over').style.display = "none";
                 this.bgContext.clearRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
                 this.shipContext.clearRect(0, 0, this.shipCanvas.width, this.shipCanvas.height);
@@ -812,7 +845,6 @@ function Game() {
         
         // Game over
         this.gameOver = function() {
-                //this.backgroundAudio.pause();
                 document.getElementById('game-over').style.display = "block";
             
         };
@@ -875,11 +907,9 @@ function SoundPool(maxSize) {
 function mute() {
     if (game.backgroundAudio.volume !== 0) {
         game.backgroundAudio.volume = 0;
-        game.gameOverAudio.volume = 0;
     }
     else {
         game.backgroundAudio.volume = .25;
-        game.gameOverAudio.volume = .25;
     }
 } 
 

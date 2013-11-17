@@ -14,7 +14,7 @@
 	    </canvas>
 	    <div class="score"><strong>SCORE: </strong><span id="score"></span></div>
                 <div class="game-over" id="game-over"><strong>GAME OVER</strong><p><span onclick="game.restart()">Restart</span></p></div>
-                <div class="loading" id="loading">LOADING...<p>Please wait</p></div>
+                <div class="loading" id="loading"><img src="imgs/loader.gif"><p>Please wait</p></div>
 	</div><!--Flash ends-->
 	<button onclick="mute()" type="button">Mute/Unmute</button>
 	<p>This game was made based on <a href="http://blog.sklambert.com/galaxian-html5-game/" target="blank">this tutorial</a>.</p>
