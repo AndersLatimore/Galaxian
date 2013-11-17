@@ -70,7 +70,7 @@ var imageRepository = new function() {
         this.background.src = "imgs/bg.png";
         this.spaceship.src = "imgs/ship.png";
         this.bullet.src = "imgs/bullet.png";
-        this.enemy.src = "imgs/enemy.png";
+        this.enemy.src = "imgs/gorf-red.png";
         this.enemyBullet.src = "imgs/bullet_enemy.png";
 }
 
@@ -512,9 +512,9 @@ function Pool(maxSize) {
 * around the screen.
 */
 function Ship() {
-        this.speed = 2;
+        this.speed = 1;
         this.bulletPool = new Pool(30);
-        var fireRate = 5;
+        var fireRate = 4;
         var counter = 0;
         this.collidableWith = "enemyBullet";
         this.type = "ship";
@@ -583,8 +583,7 @@ function Ship() {
          * Fires two bullets
          */
         this.fire = function() {
-                this.bulletPool.getTwo(this.x+6, this.y, 3,
-                 this.x+33, this.y, 3);
+                this.bulletPool.getTwo(this.x+6, this.y, 3, this.x+33, this.y, 3);
                 game.laser.get();
         };
 }
@@ -607,13 +606,13 @@ function Enemy() {
         this.spawn = function(x, y, speed) {
                 this.x = x;
                 this.y = y;
-                this.speed = speed;
+                this.speed = speed - 1;
                 this.speedX = 0;
-                this.speedY = speed;
+                this.speedY = speed - 1;
                 this.alive = true;
                 this.leftEdge = this.x - 90;
                 this.rightEdge = this.x + 90;
-                this.bottomEdge = this.y + 140;
+                this.bottomEdge = this.y + 160;
         };
 
         /*
@@ -630,7 +629,7 @@ function Enemy() {
                         this.speedX = -this.speed;
                 }
                 else if (this.y >= this.bottomEdge) {
-                        this.speed = 1;
+                        this.speed = 0.2;
                         this.speedY = 0;
                         this.y -= 5;
                         this.speedX = -this.speed;
@@ -730,7 +729,7 @@ function Game() {
                         this.shipStartX = this.shipCanvas.width/2 - imageRepository.spaceship.width;
                         this.shipStartY = this.shipCanvas.height/4*3 + imageRepository.spaceship.height*2;
                         this.ship.init(this.shipStartX, this.shipStartY,
-                         imageRepository.spaceship.width, imageRepository.spaceship.height);
+                        imageRepository.spaceship.width, imageRepository.spaceship.height);
                                                                                 
                         // Initialize the enemy pool object
                         this.enemyPool = new Pool(30);
@@ -754,13 +753,8 @@ function Game() {
                         
                         this.backgroundAudio = new Audio("sounds/galaxian-background.wav");
                         this.backgroundAudio.loop = true;
-                        this.backgroundAudio.volume = .25;
+                        this.backgroundAudio.volume = .20;
                         this.backgroundAudio.load();
-                        
-                        this.gameOverAudio = new Audio("sounds/starwars.wav");
-                        this.gameOverAudio.loop = true;
-                        this.gameOverAudio.volume = .25;
-                        this.gameOverAudio.load();
 
                         this.checkAudio = window.setInterval(function(){checkReadyState()},1000);
                 }
@@ -792,7 +786,6 @@ function Game() {
         
         // Restart the game
         this.restart = function() {
-                this.gameOverAudio.pause();
                 
                 document.getElementById('game-over').style.display = "none";
                 this.bgContext.clearRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
@@ -819,9 +812,7 @@ function Game() {
         
         // Game over
         this.gameOver = function() {
-                this.backgroundAudio.pause();
-                //this.gameOverAudio.currentTime = 0;
-                //this.gameOverAudio.play();
+                //this.backgroundAudio.pause();
                 document.getElementById('game-over').style.display = "block";
             
         };
@@ -831,7 +822,7 @@ function Game() {
 * Ensure the game sound has loaded before starting the game
 */
 function checkReadyState() {
-        if (game.gameOverAudio.readyState === 4 && game.backgroundAudio.readyState === 4) {
+        if (game.backgroundAudio.readyState === 4) {
                 window.clearInterval(game.checkAudio);
                 document.getElementById('loading').style.display = "none";
                 game.start();
